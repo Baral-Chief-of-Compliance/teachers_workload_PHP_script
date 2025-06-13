@@ -1,0 +1,49 @@
+version: '3.7'
+
+networks:
+  php_app:
+    driver: bridge
+
+services:
+  mysql_database:
+    image: mysql:8
+    container_name: mysql_database
+    restart: always
+    ports:
+      - '3306:3306' 
+    environment:
+      LANG: C.UTF-8
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: mydb
+      MYSQL_PASSWORD: admin
+      MYSQL_USER: admin
+
+    volumes:
+      - ./docker/mysql:/var/lib/mysql/
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+    networks:
+      - php_app
+
+  php:
+      container_name: php
+      image: php
+      restart: always
+      build:
+        context: ./app/
+        dockerfile: dockerfile
+        target: base
+      ports:
+        - "80:80"
+      environment:
+        MYSQL_HOST: mysql_database
+        MYSQL_PORT: 3306
+        MYSQL_LOGIN: admin
+        MYSQL_PASS: admin
+        MYSQL_DB: mydb
+
+      volumes:
+        - ./app/src:/var/www/html/
+
+      networks:
+      - php_app
